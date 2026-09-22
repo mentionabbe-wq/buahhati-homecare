@@ -24,13 +24,16 @@ COPY . .
 # (demo lokal), jadi provider disetel eksplisit saat build.
 RUN sed -i 's/provider = "sqlite"/provider = "postgresql"/' prisma/schema.prisma
 
-# DATABASE_URL palsu: hanya diperlukan agar `prisma generate` & `next build`
-# tidak menolak jalan. Koneksi sebenarnya diberikan saat container dijalankan.
-ENV DATABASE_URL="postgresql://build:build@localhost:5432/build"
-ENV AUTH_SECRET="build-time-placeholder-secret-value-32ch"
+# Nilai palsu di bawah hanya agar `prisma generate` dan `next build` tidak
+# menolak jalan; keduanya disetel per-perintah sehingga tidak ikut tersimpan
+# sebagai metadata image. Koneksi dan secret sungguhan datang dari environment
+# saat container dijalankan.
+RUN DATABASE_URL="postgresql://build:build@localhost:5432/build" \
+    npx prisma generate
 
-RUN npx prisma generate
-RUN npx next build
+RUN DATABASE_URL="postgresql://build:build@localhost:5432/build" \
+    AUTH_SECRET="00000000000000000000000000000000" \
+    npx next build
 
 # Seed dikompilasi ke JavaScript agar runtime tidak perlu tsx
 RUN npx tsc prisma/seed.ts \
