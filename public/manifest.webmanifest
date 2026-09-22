@@ -1,0 +1,23 @@
+{
+  "name": "BuahHati Home Care",
+  "short_name": "BuahHati",
+  "description": "Reservasi Baby Massage & Baby Spa home care dengan terapis berpengalaman.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fdf8f3",
+  "theme_color": "#5f9e88",
+  "lang": "id",
+  "categories": ["health", "lifestyle", "medical"],
+  "icons": [
+    { "src": "/icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Reservasi Baru", "url": "/reservasi", "description": "Buat reservasi home care" },
+    { "name": "Riwayat", "url": "/akun/riwayat", "description": "Lihat riwayat treatment" }
+  ]
+}

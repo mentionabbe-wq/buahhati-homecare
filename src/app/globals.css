@@ -1,0 +1,123 @@
+@import 'tailwindcss';
+
+@theme {
+  /* Palet pastel: cream, blush, sky, sage */
+  --color-background: #fdf8f3;
+  --color-foreground: #40382f;
+  --color-card: #ffffff;
+  --color-card-foreground: #40382f;
+  --color-muted: #f5efe7;
+  --color-muted-foreground: #8a8078;
+  --color-border: #ece2d7;
+  --color-input: #e6dad0;
+  --color-ring: #8fc0ad;
+
+  --color-primary: #5f9e88;
+  --color-primary-foreground: #ffffff;
+  --color-primary-soft: #e4f1ea;
+
+  --color-secondary: #f6cfda;
+  --color-secondary-foreground: #834a5d;
+  --color-secondary-soft: #fdeef2;
+
+  --color-accent: #bfe0f2;
+  --color-accent-foreground: #2c5a73;
+  --color-accent-soft: #eaf5fb;
+
+  --color-cream: #fdf3e7;
+  --color-sage: #dcece2;
+  --color-blush: #fbe2e9;
+  --color-sky: #dbeefa;
+
+  --color-destructive: #d9635f;
+  --color-destructive-foreground: #ffffff;
+  --color-success: #4f9d76;
+  --color-warning: #d99b4a;
+
+  --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: 'Quicksand', 'Plus Jakarta Sans', ui-rounded, system-ui, sans-serif;
+
+  --radius-4xl: 2rem;
+  --shadow-soft: 0 12px 40px -18px rgba(96, 78, 62, 0.35);
+  --shadow-card: 0 2px 14px -6px rgba(96, 78, 62, 0.18);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    overscroll-behavior-y: none;
+  }
+
+  h1,
+  h2,
+  h3,
+  .font-display {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+  }
+
+  ::selection {
+    background: var(--color-secondary);
+    color: var(--color-secondary-foreground);
+  }
+
+  /* fokus terlihat jelas untuk navigasi keyboard */
+  :focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  .bh-gradient {
+    background-image: linear-gradient(135deg, #fdf3e7 0%, #fbe2e9 45%, #dbeefa 100%);
+  }
+
+  .bh-card {
+    background: var(--color-card);
+    border: 1px solid var(--color-border);
+    border-radius: 1.25rem;
+    box-shadow: var(--shadow-card);
+  }
+
+  .bh-scroll-x {
+    overflow-x: auto;
+    scrollbar-width: thin;
+  }
+}
+
+/* Skeleton */
+@keyframes bh-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+.bh-skeleton {
+  animation: bh-pulse 1.6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  background: var(--color-muted);
+  border-radius: 0.75rem;
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: #fff;
+  }
+}

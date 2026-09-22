@@ -1,0 +1,356 @@
+// BuahHati Home Care — Prisma schema
+// Target utama: PostgreSQL. Schema ditulis portable (tanpa native enum / scalar list)
+// sehingga bisa dijalankan di SQLite untuk demo offline via `npm run db:use:sqlite`.
+// Nilai enum divalidasi di application layer (src/lib/constants.ts + zod).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+/// role: ADMIN | THERAPIST | CUSTOMER
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  name         String
+  phone        String?
+  passwordHash String
+  role         String    @default("CUSTOMER")
+  isActive     Boolean   @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  customer  Customer?
+  therapist Therapist?
+  sessions  Session[]
+  auditLogs AuditLog[]
+
+  @@index([role])
+}
+
+model Session {
+  id        String    @id @default(cuid())
+  token     String    @unique
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userAgent String?
+  ip        String?
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+}
+
+model Customer {
+  id                String   @id @default(cuid())
+  userId            String?  @unique
+  user              User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  name              String
+  phone             String   @unique
+  email             String?
+  address           String?
+  district          String?
+  village           String?
+  landmark          String?
+  locationNote      String?
+  mapsUrl           String?
+  notes             String?
+  totalReservations Int      @default(0)
+  totalSpent        Int      @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  babies        Baby[]
+  reservations  Reservation[]
+  notifications Notification[]
+
+  @@index([name])
+}
+
+/// gender: MALE | FEMALE
+model Baby {
+  id         String   @id @default(cuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  name       String
+  birthDate  DateTime
+  gender     String   @default("MALE")
+  weightKg   Float?
+  notes      String?
+  allergies  String?
+  photoUrl   String?
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  reservations Reservation[]
+  treatments   Treatment[]
+
+  @@index([customerId])
+}
+
+/// commissionType: PERCENT | NOMINAL
+model Therapist {
+  id              String   @id @default(cuid())
+  userId          String?  @unique
+  user            User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  name            String
+  phone           String
+  email           String?
+  photoUrl        String?
+  bio             String?
+  skills          String?
+  serviceAreas    String?
+  isActive        Boolean  @default(true)
+  commissionType  String   @default("PERCENT")
+  commissionValue Float    @default(20)
+  maxDailyBooking Int      @default(6)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  schedules    TherapistSchedule[]
+  timeOffs     TherapistTimeOff[]
+  reservations Reservation[]
+  treatments   Treatment[]
+}
+
+model TherapistSchedule {
+  id          String    @id @default(cuid())
+  therapistId String
+  therapist   Therapist @relation(fields: [therapistId], references: [id], onDelete: Cascade)
+  dayOfWeek   Int
+  startTime   String    @default("09:00")
+  endTime     String    @default("17:00")
+  isDayOff    Boolean   @default(false)
+
+  @@unique([therapistId, dayOfWeek])
+}
+
+model TherapistTimeOff {
+  id          String    @id @default(cuid())
+  therapistId String
+  therapist   Therapist @relation(fields: [therapistId], references: [id], onDelete: Cascade)
+  date        DateTime
+  reason      String?
+  createdAt   DateTime  @default(now())
+
+  @@unique([therapistId, date])
+}
+
+model Service {
+  id              String   @id @default(cuid())
+  name            String
+  slug            String   @unique
+  description     String?
+  durationMinutes Int      @default(60)
+  price           Int      @default(0)
+  imageUrl        String?
+  isActive        Boolean  @default(true)
+  maxPerSlot      Int      @default(1)
+  requirements    String?
+  notes           String?
+  sortOrder       Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  reservations Reservation[]
+}
+
+/// status: PENDING | CONFIRMED | ON_THE_WAY | ARRIVED | IN_SERVICE | COMPLETED | CANCELLED | NO_SHOW
+/// paymentStatus: UNPAID | PENDING | PAID | REFUNDED | CANCELLED
+model Reservation {
+  id              String     @id @default(cuid())
+  reservationCode String     @unique
+  customerId      String
+  customer        Customer   @relation(fields: [customerId], references: [id])
+  babyId          String
+  baby            Baby       @relation(fields: [babyId], references: [id])
+  serviceId       String
+  service         Service    @relation(fields: [serviceId], references: [id])
+  therapistId     String?
+  therapist       Therapist? @relation(fields: [therapistId], references: [id])
+
+  date      DateTime
+  startTime String
+  endTime   String
+  startAt   DateTime
+  endAt     DateTime
+
+  address      String
+  district     String?
+  village      String?
+  landmark     String?
+  locationNote String?
+  mapsUrl      String?
+
+  babyConditions String?
+  conditionNote  String?
+  needsReview    Boolean @default(false)
+
+  servicePrice Int     @default(0)
+  transportFee Int     @default(0)
+  discount     Int     @default(0)
+  total        Int     @default(0)
+  promoId      String?
+  promo        Promo?  @relation(fields: [promoId], references: [id])
+
+  status        String @default("PENDING")
+  paymentStatus String @default("UNPAID")
+
+  customerNote String?
+  adminNote    String?
+
+  confirmedAt  DateTime?
+  onTheWayAt   DateTime?
+  arrivedAt    DateTime?
+  startedAt    DateTime?
+  completedAt  DateTime?
+  cancelledAt  DateTime?
+  cancelReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  treatment     Treatment?
+  payments      Payment[]
+  statusHistory ReservationStatusHistory[]
+  notifications Notification[]
+
+  @@unique([therapistId, startAt], name: "therapist_slot_unique")
+  @@index([date])
+  @@index([status])
+  @@index([customerId])
+  @@index([therapistId, date])
+}
+
+model ReservationStatusHistory {
+  id            String      @id @default(cuid())
+  reservationId String
+  reservation   Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  status        String
+  note          String?
+  changedBy     String?
+  createdAt     DateTime    @default(now())
+
+  @@index([reservationId])
+}
+
+model Treatment {
+  id              String      @id @default(cuid())
+  reservationId   String      @unique
+  reservation     Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  therapistId     String
+  therapist       Therapist   @relation(fields: [therapistId], references: [id])
+  babyId          String
+  baby            Baby        @relation(fields: [babyId], references: [id])
+  conditionBefore String?
+  conditionDuring String?
+  conditionAfter  String?
+  treatmentAreas  String?
+  durationMinutes Int         @default(0)
+  babyResponse    String?
+  notes           String?
+  recommendation  String?
+  signatureName   String?
+  signedAt        DateTime?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+/// method: CASH | TRANSFER | QRIS | GATEWAY
+/// status: UNPAID | PENDING | PAID | REFUNDED | CANCELLED
+model Payment {
+  id            String      @id @default(cuid())
+  reservationId String
+  reservation   Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  method        String      @default("CASH")
+  status        String      @default("PENDING")
+  amount        Int         @default(0)
+  reference     String?
+  proofUrl      String?
+  note          String?
+  paidAt        DateTime?
+  confirmedBy   String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([reservationId])
+  @@index([status])
+}
+
+/// discountType: NOMINAL | PERCENT
+model Promo {
+  id             String   @id @default(cuid())
+  code           String   @unique
+  name           String
+  description    String?
+  discountType   String   @default("NOMINAL")
+  discountValue  Int      @default(0)
+  minTransaction Int      @default(0)
+  maxDiscount    Int?
+  startDate      DateTime
+  endDate        DateTime
+  quota          Int?
+  usedCount      Int      @default(0)
+  isActive       Boolean  @default(true)
+  serviceIds     String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  reservations Reservation[]
+}
+
+/// status: PENDING | SENT | FAILED
+model Notification {
+  id            String       @id @default(cuid())
+  reservationId String?
+  reservation   Reservation? @relation(fields: [reservationId], references: [id], onDelete: SetNull)
+  customerId    String?
+  customer      Customer?    @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  channel       String       @default("WHATSAPP")
+  template      String
+  to            String
+  message       String
+  status        String       @default("PENDING")
+  provider      String?
+  providerRef   String?
+  error         String?
+  scheduledAt   DateTime?
+  sentAt        DateTime?
+  createdAt     DateTime     @default(now())
+
+  @@index([status])
+  @@index([template])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  actorName String?
+  action    String
+  entity    String
+  entityId  String?
+  before    String?
+  after     String?
+  ip        String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([entity, entityId])
+  @@index([createdAt])
+}
+
+model Setting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  group     String   @default("general")
+  updatedAt DateTime @updatedAt
+}

@@ -1,0 +1,126 @@
+# ---------------------------------------------------------------------------
+# BuahHati Home Care — CasaOS / Docker Compose
+#
+# Pasang di CasaOS:  App Store → Custom Install → Import → tempel berkas ini.
+# Atau lewat terminal CasaOS:  docker compose up -d
+#
+# WAJIB diganti sebelum dipakai:
+#   - AUTH_SECRET  (buat dengan: openssl rand -hex 32)
+#   - CRON_SECRET  (buat dengan: openssl rand -hex 24)
+#   - POSTGRES_PASSWORD dan bagian password pada DATABASE_URL
+# ---------------------------------------------------------------------------
+name: buahhati-homecare
+
+services:
+  app:
+    image: ghcr.io/mentionabbe-wq/buahhati-homecare:latest
+    container_name: buahhati-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "3600:3000"
+    environment:
+      # --- Database -------------------------------------------------------
+      DATABASE_URL: "postgresql://buahhati:ubah_password_ini@db:5432/buahhati?schema=public"
+      # --- Keamanan (WAJIB diganti) ---------------------------------------
+      AUTH_SECRET: "ganti-dengan-64-karakter-hex-hasil-openssl-rand-hex-32"
+      CRON_SECRET: "ganti-dengan-48-karakter-hex-hasil-openssl-rand-hex-24"
+      SESSION_MAX_AGE_DAYS: "7"
+      # --- Aplikasi -------------------------------------------------------
+      NEXT_PUBLIC_APP_NAME: "BuahHati Home Care"
+      NEXT_PUBLIC_APP_URL: "http://buahhati.local:3600"
+      BUSINESS_TZ_OFFSET: "420"
+      TZ: "Asia/Jakarta"
+      # --- Data awal ------------------------------------------------------
+      # Seed hanya berjalan saat database masih kosong. Setel "false" bila
+      # tidak ingin akun demo dibuat sama sekali.
+      SEED_DATABASE: "true"
+      SEED_ADMIN_EMAIL: "admin@example.com"
+      SEED_ADMIN_PASSWORD: "Admin123!"
+      # --- WhatsApp: mock | fonnte | wablas | meta -------------------------
+      WHATSAPP_PROVIDER: "mock"
+      WHATSAPP_API_URL: ""
+      WHATSAPP_API_KEY: ""
+      WHATSAPP_SENDER: ""
+      # --- Payment gateway: mock | midtrans | xendit -----------------------
+      PAYMENT_PROVIDER: "mock"
+      PAYMENT_SERVER_KEY: ""
+      PAYMENT_CLIENT_KEY: ""
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3000/api/services"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    x-casaos:
+      ports:
+        - container: "3000"
+          description:
+            en_us: Web interface of BuahHati Home Care
+            id_id: Antarmuka web BuahHati Home Care
+
+  db:
+    image: postgres:16-alpine
+    container_name: buahhati-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: buahhati
+      POSTGRES_PASSWORD: ubah_password_ini
+      POSTGRES_DB: buahhati
+      TZ: "Asia/Jakarta"
+    volumes:
+      - /DATA/AppData/buahhati-homecare/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U buahhati -d buahhati"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    x-casaos:
+      volumes:
+        - container: /var/lib/postgresql/data
+          description:
+            en_us: PostgreSQL data directory
+            id_id: Direktori data PostgreSQL
+
+x-casaos:
+  architectures:
+    - amd64
+    - arm64
+  main: app
+  author: mentionabbe-wq
+  developer: mentionabbe-wq
+  category: Home
+  store_app_id: buahhati-homecare
+  icon: https://raw.githubusercontent.com/mentionabbe-wq/buahhati-homecare/main/public/icons/icon-512.png
+  thumbnail: https://raw.githubusercontent.com/mentionabbe-wq/buahhati-homecare/main/public/icons/icon-512.png
+  screenshot_link: []
+  title:
+    en_us: BuahHati Home Care
+  tagline:
+    en_us: Baby massage & baby spa home care booking
+    id_id: Reservasi home care pijat bayi & baby spa
+  description:
+    en_us: >-
+      Booking and management app for baby massage / baby spa home care services.
+      Includes a public landing page, multi-step reservation form, customer
+      portal, therapist portal, and a full admin dashboard with scheduling,
+      payments, promos, and reports.
+    id_id: >-
+      Aplikasi reservasi dan manajemen layanan home care pijat bayi & baby spa.
+      Berisi landing page publik, formulir reservasi bertahap, portal pelanggan,
+      portal terapis, serta dashboard admin lengkap dengan kalender jadwal,
+      pembayaran, promo, dan laporan.
+  tips:
+    before_install:
+      en_us: >-
+        Change AUTH_SECRET, CRON_SECRET, and the database password before
+        starting. Default demo accounts are created only on an empty database.
+      id_id: >-
+        Ganti AUTH_SECRET, CRON_SECRET, dan password database sebelum
+        dijalankan. Akun demo hanya dibuat saat database masih kosong.
+  index: /
+  port_map: "3600"
+  scheme: http

@@ -1,0 +1,67 @@
+# ---------------------------------------------------------------------------
+# Varian yang membangun image dari kode sumber, bukan menarik dari GHCR.
+# Pakai ini bila ingin memodifikasi aplikasi sendiri:
+#
+#   docker compose -f docker-compose.build.yml up -d --build
+#
+# Nilai rahasia dibaca dari berkas .env di folder yang sama
+# (salin dari .env.docker.example).
+# ---------------------------------------------------------------------------
+name: buahhati-homecare
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: buahhati-homecare:local
+    container_name: buahhati-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${APP_PORT:-3600}:3000"
+    environment:
+      DATABASE_URL: "postgresql://${POSTGRES_USER:-buahhati}:${POSTGRES_PASSWORD:?wajib diisi}@db:5432/${POSTGRES_DB:-buahhati}?schema=public"
+      AUTH_SECRET: "${AUTH_SECRET:?wajib diisi minimal 32 karakter}"
+      CRON_SECRET: "${CRON_SECRET:-}"
+      NEXT_PUBLIC_APP_NAME: "${NEXT_PUBLIC_APP_NAME:-BuahHati Home Care}"
+      NEXT_PUBLIC_APP_URL: "${NEXT_PUBLIC_APP_URL:-http://localhost:3600}"
+      BUSINESS_TZ_OFFSET: "${BUSINESS_TZ_OFFSET:-420}"
+      TZ: "${TZ:-Asia/Jakarta}"
+      SEED_DATABASE: "${SEED_DATABASE:-true}"
+      SEED_ADMIN_EMAIL: "${SEED_ADMIN_EMAIL:-admin@example.com}"
+      SEED_ADMIN_PASSWORD: "${SEED_ADMIN_PASSWORD:-Admin123!}"
+      WHATSAPP_PROVIDER: "${WHATSAPP_PROVIDER:-mock}"
+      WHATSAPP_API_URL: "${WHATSAPP_API_URL:-}"
+      WHATSAPP_API_KEY: "${WHATSAPP_API_KEY:-}"
+      WHATSAPP_SENDER: "${WHATSAPP_SENDER:-}"
+      PAYMENT_PROVIDER: "${PAYMENT_PROVIDER:-mock}"
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3000/api/services"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+
+  db:
+    image: postgres:16-alpine
+    container_name: buahhati-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: "${POSTGRES_USER:-buahhati}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?wajib diisi}"
+      POSTGRES_DB: "${POSTGRES_DB:-buahhati}"
+      TZ: "${TZ:-Asia/Jakarta}"
+    volumes:
+      - buahhati-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-buahhati} -d ${POSTGRES_DB:-buahhati}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+volumes:
+  buahhati-db-data:

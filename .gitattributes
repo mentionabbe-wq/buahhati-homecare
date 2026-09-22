@@ -1,0 +1,10 @@
+# Normalisasi akhir baris: LF di repo dan saat checkout.
+# Penting agar docker/entrypoint.sh tetap LF dan bisa dieksekusi di container.
+* text=auto eol=lf
+
+*.sh text eol=lf
+*.mjs text eol=lf
+*.png binary
+*.jpg binary
+*.ico binary
+*.db binary

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="BuahHati Home Care">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fdf3e7"/>
+      <stop offset="55%" stop-color="#fbe2e9"/>
+      <stop offset="100%" stop-color="#dbeefa"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <path d="M256 402c-8 0-16-3-22-9l-96-93c-33-32-33-85 0-117 31-30 81-30 112 0l6 6 6-6c31-30 81-30 112 0 33 32 33 85 0 117l-96 93c-6 6-14 9-22 9z" fill="#5f9e88"/>
+  <circle cx="205" cy="228" r="17" fill="#fdf8f3"/>
+  <circle cx="307" cy="228" r="17" fill="#fdf8f3"/>
+  <path d="M214 285c14 16 30 24 42 24s28-8 42-24" fill="none" stroke="#fdf8f3" stroke-width="18" stroke-linecap="round"/>
+</svg>
