@@ -71,6 +71,6 @@ USER node
 EXPOSE 3000
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=5 \
-  CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:3000/api/services || exit 1
+  CMD node -e "fetch(process.env.HEALTH_URL||('http://127.0.0.1:'+(process.env.PORT||3000)+'/api/services')).then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 
 ENTRYPOINT ["docker/entrypoint.sh"]
