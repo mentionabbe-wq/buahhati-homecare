@@ -33,5 +33,8 @@ echo "✓ Skema database siap."
 
 node docker/seed-if-empty.mjs
 
-echo "› Menjalankan aplikasi pada port ${PORT:-3000}…"
-exec npx next start --port "${PORT:-3000}" --hostname "${HOSTNAME:-0.0.0.0}"
+# Selalu mengikat ke 0.0.0.0. Variabel HOSTNAME tidak dipakai karena Docker
+# mengisinya dengan nama host container, dan mengikat ke alamat itu membuat
+# healthcheck lewat 127.0.0.1 gagal.
+echo "› Menjalankan aplikasi pada 0.0.0.0:${PORT:-3000}…"
+exec npx next start --port "${PORT:-3000}" --hostname 0.0.0.0

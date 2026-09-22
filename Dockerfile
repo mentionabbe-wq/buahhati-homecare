@@ -48,7 +48,6 @@ RUN npx tsc prisma/seed.ts \
 FROM base AS runner
 ENV NODE_ENV=production
 ENV PORT=3000
-ENV HOSTNAME=0.0.0.0
 
 COPY package.json package-lock.json ./
 COPY --from=builder /app/prisma ./prisma
@@ -71,7 +70,7 @@ USER node
 
 EXPOSE 3000
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=5 \
   CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:3000/api/services || exit 1
 
 ENTRYPOINT ["docker/entrypoint.sh"]
