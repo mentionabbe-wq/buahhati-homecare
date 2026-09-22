@@ -179,6 +179,8 @@ Rate limiter bawaan bersifat in-memory (cocok untuk satu instance). Untuk multi-
 
 Repo menyertakan `Dockerfile`, `docker-compose.yml` (lengkap dengan metadata `x-casaos`), dan workflow GitHub Actions yang menerbitkan image ke `ghcr.io/mentionabbe-wq/buahhati-homecare`. Compose menjalankan dua container: aplikasi dan PostgreSQL 16.
 
+> **Sekali saja setelah build pertama:** paket GHCR lahir dalam status privat, sehingga CasaOS menolak dengan pesan `error from registry: denied`. Buka https://github.com/users/mentionabbe-wq/packages/container/buahhati-homecare/settings → **Change visibility → Public**. Setelah itu image dapat ditarik tanpa login.
+
 **Cara 1 — lewat antarmuka CasaOS.**
 
 1. Buka **App Store → Custom Install → Import**, tempel isi `docker-compose.yml`.
